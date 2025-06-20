@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sudoku Solver</title>
+  <style>
+    video, canvas { border: 1px solid black; }
+  </style>
+</head>
+<body>
+  <h1>Sudoku Solver</h1>
+  <video id="video" width="300" height="300" autoplay></video>
+  <br/>
+  <button onclick="capture()">Capture</button>
+  <canvas id="canvas" width="300" height="300" style="display: none;"></canvas>
+  <pre id="output"></pre>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const output = document.getElementById('output');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream });
+
+    function capture() {
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const image = canvas.toDataURL('image/jpeg');
+
+      fetch('/solve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: image })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) output.textContent = "Error: " + data.error;
+        else {
+          let txt = '';
+          data.solved.forEach(row => {
+            txt += row.join(' ') + '\n';
+          });
+          output.textContent = txt;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
